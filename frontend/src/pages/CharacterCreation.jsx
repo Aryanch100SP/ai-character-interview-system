@@ -1,13 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCharacterContext } from '../context/CharacterContext';
 
 export default function CharacterCreation() {
   const { state, dispatch } = useCharacterContext();
   const navigate = useNavigate();
-  const { characterForm } = state; // Pulling the current data from your global state
+  const { characterForm } = state; 
+  const [isSubmitting, setIsSubmitting] = useState(false); // To prevent double-clicks
 
-  // This function updates your Context API state every time you type a letter
   const handleChange = (e) => {
     dispatch({
       type: 'UPDATE_FORM_FIELD',
@@ -16,17 +16,37 @@ export default function CharacterCreation() {
     });
   };
 
-  // This handles the form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    // In Week 3, we will send this exact data to Node.js and PostgreSQL.
-    // For now, we verify it works in local state and return to the dashboard.
-    console.log("Character Data Ready for DB:", characterForm);
-    alert(`Success! ${characterForm.name} saved to local state.`);
-    
-  
-    navigate('/'); // Sends you back to the Dashboard
+    try {
+      // Send the data to your Node.js Backend!
+      const response = await fetch('http://localhost:5000/api/characters', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(characterForm),
+      });
+
+      if (response.ok) {
+        // If the backend says "201 Created", we succeed!
+        const savedCharacter = await response.json();
+        alert(`Success! ${savedCharacter.name} saved to PostgreSQL.`);
+        
+        dispatch({ type: 'RESET_FORM' }); 
+        navigate('/'); 
+      } else {
+        const errorData = await response.json();
+        alert(`Failed to save: ${errorData.error}`);
+      }
+    } catch (err) {
+      console.error("Network Error:", err);
+      alert("Could not connect to the backend server. Is it running?");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -35,69 +55,39 @@ export default function CharacterCreation() {
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Design New Character</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Character Name */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Character Name</label>
-            <input 
-              type="text" 
-              name="name" 
-              value={characterForm.name} 
-              onChange={handleChange} 
-              required 
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" 
-              placeholder="e.g., Emperor Prithviraj Chauhan" 
-            />
+            <input type="text" name="name" value={characterForm.name} onChange={handleChange} required 
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" 
+              placeholder="e.g., Emperor Prithviraj Chauhan" />
           </div>
 
-          {/* Short Description */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Short Description</label>
-            <input 
-              type="text" 
-              name="short_description" 
-              value={characterForm.short_description} 
-              onChange={handleChange} 
-              required 
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors" 
-              placeholder="e.g., A fearless and just historical ruler." 
-            />
+            <input type="text" name="short_description" value={characterForm.short_description} onChange={handleChange} required 
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" 
+              placeholder="e.g., A fearless and just historical ruler." />
           </div>
 
-          {/* Backstory */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Backstory (System Prompt Context)</label>
-            <textarea 
-              name="backstory" 
-              value={characterForm.backstory} 
-              onChange={handleChange} 
-              required 
-              rows="4"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none" 
-              placeholder="Detail their history, motivations, and secrets. This will be fed directly to the AI." 
-            />
+            <textarea name="backstory" value={characterForm.backstory} onChange={handleChange} required rows="4"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors resize-none" 
+              placeholder="Detail their history, motivations, and secrets. This will be fed directly to the AI." />
           </div>
 
-          {/* Personality Traits */}
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">Personality Traits</label>
-            <textarea 
-              name="personality_traits" 
-              value={characterForm.personality_traits} 
-              onChange={handleChange} 
-              required 
-              rows="2"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors resize-none" 
-              placeholder="e.g., Formal, authoritative, speaks in a commanding tone." 
-            />
+            <textarea name="personality_traits" value={characterForm.personality_traits} onChange={handleChange} required rows="2"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors resize-none" 
+              placeholder="e.g., Formal, authoritative, speaks in a commanding tone." />
           </div>
 
-          {/* Submit Button */}
           <div className="pt-4">
-            <button 
-              type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-sm"
+            <button type="submit" disabled={isSubmitting}
+              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-sm"
             >
-              Initialize Character Profile
+              {isSubmitting ? 'Saving to Database...' : 'Initialize Character Profile'}
             </button>
           </div>
         </form>

@@ -1,9 +1,118 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { Send, ArrowLeft, Bot, User } from 'lucide-react';
 
 export default function ChatRoom() {
+  const { characterId } = useParams(); // Grabs the ID from the URL
+  const [character, setCharacter] = useState(null);
+  const [message, setMessage] = useState('');
+  const [chatHistory, setChatHistory] = useState([]);
+
+  // Fetch the character's details when the page loads
+  useEffect(() => {
+    const fetchCharacter = async () => {
+      try {
+        const response = await fetch(`http://localhost:5000/api/characters/${characterId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setCharacter(data);
+          // Set an initial greeting message
+          setChatHistory([{ 
+            id: 1, 
+            role: 'character', 
+            content: `Hello. I am ${data.name}. ${data.short_description} How shall we begin this interview?` 
+          }]);
+        }
+      } catch (error) {
+        console.error("Error fetching character:", error);
+      }
+    };
+    fetchCharacter();
+  }, [characterId]);
+
+  const handleSendMessage = (e) => {
+    e.preventDefault();
+    if (!message.trim()) return;
+
+    // Add user message to UI
+    const newUserMsg = { id: Date.now(), role: 'user', content: message };
+    setChatHistory((prev) => [...prev, newUserMsg]);
+    setMessage('');
+
+    // In Week 4, we will send this to Python here!
+    setTimeout(() => {
+      setChatHistory((prev) => [...prev, { 
+        id: Date.now() + 1, 
+        role: 'system', 
+        content: "[System: AI Integration pending Week 4 Python Engine connection.]" 
+      }]);
+    }, 1000);
+  };
+
+  if (!character) return <div className="text-center py-12 text-gray-500">Loading Interview Interface...</div>;
+
   return (
-    <div className="p-6 bg-white rounded-lg shadow">
-      <h1 className="text-2xl font-bold">Chat Room</h1>
+    <div className="max-w-4xl mx-auto flex flex-col h-[80vh] bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
+      
+      {/* Chat Header */}
+      <div className="bg-indigo-600 px-6 py-4 flex items-center justify-between text-white">
+        <div className="flex items-center space-x-4">
+          <Link to="/" className="hover:bg-indigo-700 p-2 rounded-full transition-colors">
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <div className="bg-white/20 p-2 rounded-full">
+            <Bot className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">{character.name}</h2>
+            <p className="text-indigo-200 text-sm line-clamp-1">{character.personality_traits}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Chat Messages Area */}
+      <div className="flex-grow overflow-y-auto p-6 space-y-6 bg-gray-50">
+        {chatHistory.map((msg) => (
+          <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`flex max-w-[80%] ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+              
+              <div className={`flex-shrink-0 h-8 w-8 rounded-full flex items-center justify-center ${msg.role === 'user' ? 'bg-indigo-100 ml-3' : 'bg-white border border-gray-200 mr-3'}`}>
+                {msg.role === 'user' ? <User className="h-5 w-5 text-indigo-600" /> : <Bot className="h-5 w-5 text-gray-600" />}
+              </div>
+              
+              <div className={`px-4 py-3 rounded-2xl shadow-sm ${
+                msg.role === 'user' ? 'bg-indigo-600 text-white rounded-tr-none' : 
+                msg.role === 'system' ? 'bg-gray-200 text-gray-600 italic rounded-tl-none' : 
+                'bg-white border border-gray-200 text-gray-800 rounded-tl-none'
+              }`}>
+                <p className="text-sm md:text-base">{msg.content}</p>
+              </div>
+
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Message Input Box */}
+      <div className="p-4 bg-white border-t border-gray-200">
+        <form onSubmit={handleSendMessage} className="flex space-x-2">
+          <input
+            type="text"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder={`Ask ${character.name} a question...`}
+            className="flex-grow px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors"
+          />
+          <button
+            type="submit"
+            disabled={!message.trim()}
+            className="bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-300 text-white px-5 py-3 rounded-lg font-medium transition-colors flex items-center shadow-sm"
+          >
+            <Send className="h-5 w-5" />
+          </button>
+        </form>
+      </div>
+
     </div>
   );
 }

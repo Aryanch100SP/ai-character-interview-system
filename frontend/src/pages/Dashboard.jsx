@@ -1,11 +1,29 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusCircle, MessageSquare, User } from 'lucide-react';
-import { useCharacterContext } from '../context/CharacterContext'; // Added this import
 
 export default function Dashboard() {
-  const { state } = useCharacterContext();
-  const character = state.characterForm; // Grabs the character you just typed in
+  const [characters, setCharacters] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // This runs automatically when the Dashboard loads
+  useEffect(() => {
+    const fetchCharacters = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/characters');
+        if (response.ok) {
+          const data = await response.json();
+          setCharacters(data); // Save the database characters into React state
+        }
+      } catch (error) {
+        console.error("Error fetching characters:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchCharacters();
+  }, []);
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -16,32 +34,39 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Dynamic Rendering: Show card if a name exists, otherwise show empty state */}
-      {character.name ? (
+      {isLoading ? (
+        <div className="text-center py-12 text-gray-500">Loading your characters from the database...</div>
+      ) : characters.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="bg-indigo-100 p-3 rounded-full">
-                <User className="h-6 w-6 text-indigo-600" />
-              </div>
+          {/* We loop through the database array and create a card for each one */}
+          {characters.map((char) => (
+            <div key={char.id} className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between">
               <div>
-                <h3 className="text-xl font-bold text-gray-900">{character.name}</h3>
-                <p className="text-sm text-gray-500 line-clamp-1">{character.short_description}</p>
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="bg-indigo-100 p-3 rounded-full">
+                    <User className="h-6 w-6 text-indigo-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">{char.name}</h3>
+                    <p className="text-sm text-gray-500 line-clamp-1">{char.short_description}</p>
+                  </div>
+                </div>
+                <div className="mb-4">
+                   <p className="text-sm text-gray-600 line-clamp-2"><span className="font-semibold">Traits:</span> {char.personality_traits}</p>
+                </div>
               </div>
+              <Link
+  to={`/chat/${char.id}`}
+  className="w-full flex items-center justify-center space-x-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-2 rounded-lg font-medium transition-colors mt-4"
+>
+  <MessageSquare className="h-4 w-4" />
+  <span>Start Interview</span>
+</Link>
             </div>
-            <div className="mb-4">
-               <p className="text-sm text-gray-600 line-clamp-2"><span className="font-semibold">Traits:</span> {character.personality_traits}</p>
-            </div>
-            <button
-              onClick={() => alert("Backend chat integration coming in Week 3!")}
-              className="w-full flex items-center justify-center space-x-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 px-4 py-2 rounded-lg font-medium transition-colors"
-            >
-              <MessageSquare className="h-4 w-4" />
-              <span>Start Interview</span>
-            </button>
-          </div>
+          ))}
         </div>
       ) : (
+        /* The Empty State (If database is empty) */
         <div className="bg-white border-2 border-dashed border-gray-300 rounded-xl p-12 text-center shadow-sm">
           <div className="flex justify-center mb-4">
             <div className="bg-indigo-50 p-4 rounded-full">
