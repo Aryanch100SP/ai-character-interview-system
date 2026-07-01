@@ -12,7 +12,7 @@ export default function ChatRoom() {
   useEffect(() => {
     const fetchCharacter = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/characters/${characterId}`);
+        const response = await fetch(`https://ai-character-interview-system-gwmf.onrender.com/api/characters/${characterId}`);
         if (response.ok) {
           const data = await response.json();
           setCharacter(data);

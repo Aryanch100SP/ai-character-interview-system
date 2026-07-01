@@ -10,7 +10,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/characters');
+        const response = await fetch('[https://ai-character-interview-system-gwmf.onrender.com/api/characters](https://ai-character-interview-system-gwmf.onrender.com/api/characters)');
         if (response.ok) {
           const data = await response.json();
           setCharacters(data); // Save the database characters into React state
