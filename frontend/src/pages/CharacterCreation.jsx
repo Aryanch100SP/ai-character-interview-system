@@ -8,6 +8,7 @@ export default function CharacterCreation() {
   const navigate = useNavigate();
   const { characterForm } = state; 
   const [isSubmitting, setIsSubmitting] = useState(false); // To prevent double-clicks
+  
 
   const handleChange = (e) => {
     dispatch({
@@ -32,12 +33,9 @@ export default function CharacterCreation() {
       });
 
       if (response.ok) {
-        // If the backend says "201 Created", we succeed!
-        const savedCharacter = await response.json();
-        alert(`Success! ${savedCharacter.name} saved to PostgreSQL.`);
-        
-        dispatch({ type: 'RESET_FORM' }); 
-        navigate('/'); 
+       alert(`Success! ${name} saved to PostgreSQL.`);
+       navigate('/'); // Automatically sends you back to the dashboard!
+
       } else {
         const errorData = await response.json();
         alert(`Failed to save: ${errorData.error}`);

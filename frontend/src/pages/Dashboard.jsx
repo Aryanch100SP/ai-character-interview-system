@@ -8,22 +8,19 @@ export default function Dashboard() {
 
   // This runs automatically when the Dashboard loads
   useEffect(() => {
-    const fetchCharacters = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/characters`);
-        if (response.ok) {
-          const data = await response.json();
-          setCharacters(data); // Save the database characters into React state
-        }
-      } catch (error) {
-        console.error("Error fetching characters:", error);
-      } finally {
-        setIsLoading(false);
+  const fetchCharacters = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/characters`);
+      if (response.ok) {
+        const data = await response.json();
+        setCharacters(data); // Injects the Neon DB array into your UI state
       }
-    };
-
-    fetchCharacters();
-  }, []);
+    } catch (err) {
+      console.error("Error loading dashboard characters:", err);
+    }
+  };
+  fetchCharacters();
+}, []);
 
   return (
     <div className="max-w-5xl mx-auto">

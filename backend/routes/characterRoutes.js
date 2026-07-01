@@ -25,23 +25,20 @@ router.post('/', async (req, res) => {
 export default router;
 // 3. GET a Single Character by ID
 // The Chat Room will call this to load the specific character you are interviewing.
-router.get('/:id', async (req, res) => {
+// GET ALL CHARACTERS FOR THE DASHBOARD
+router.get('/', async (req, res) => {
   try {
-    const { id } = req.params;
-    const character = await pool.query(
-      'SELECT * FROM characters WHERE id = $1',
-      [id]
+    const allCharacters = await pool.query(
+      'SELECT id, name, short_description, backstory, personality_traits FROM characters ORDER BY created_at DESC'
     );
     
-    if (character.rows.length === 0) {
-      return res.status(404).json({ error: "Character not found" });
-    }
-    
-    res.status(200).json(character.rows[0]);
+    // Return the rows array straight to the React dashboard
+    res.status(200).json(allCharacters.rows);
   } catch (err) {
-    console.error("Error fetching character:", err.message);
-    res.status(500).json({ error: "Server error while fetching character" });
+    console.error("Database Fetch Error:", err.message);
+    res.status(500).json({ error: "Failed to retrieve characters from database" });
   }
+});
   // 4. CHAT WITH CHARACTER (Bridge to Python AI Engine)
 router.post('/:id/chat', async (req, res) => {
   try {
