@@ -13,10 +13,13 @@ export default function Dashboard() {
       const response = await fetch(`${API_BASE_URL}/api/characters`);
       if (response.ok) {
         const data = await response.json();
-        setCharacters(data); // Injects the Neon DB array into your UI state
+        setCharacters(data);
       }
     } catch (err) {
       console.error("Error loading dashboard characters:", err);
+    } finally {
+      // THIS TELLS THE UI TO STOP LOADING
+      setIsLoading(false); 
     }
   };
   fetchCharacters();

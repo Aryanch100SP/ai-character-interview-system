@@ -44,7 +44,7 @@ export default function ChatRoom() {
 
     try {
       // 2. Call your live Node.js backend
-      const response = await fetch(`https://ai-character-interview-system-gwmf.onrender.com/api/characters/$`, {
+      const response = await fetch(`${API_BASE_URL}/api/characters/${characterId}/chat`,{
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -33,7 +33,7 @@ export default function CharacterCreation() {
       });
 
       if (response.ok) {
-       alert(`Success! ${name} saved to PostgreSQL.`);
+       alert(`Success! ${characterForm.name} saved to PostgreSQL.`);
        navigate('/'); // Automatically sends you back to the dashboard!
 
       } else {
