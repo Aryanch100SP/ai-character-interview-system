@@ -46,8 +46,9 @@ async def chat_with_character(payload: ChatRequest):
         )
 
         # Initialize the lightning-fast Gemini 1.5 Flash model with the character persona
+        # Initialize the updated Gemini 1.5 Flash model
         model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
+            model_name="gemini-1.5-flash-latest",
             system_instruction=system_instruction
         )
 
