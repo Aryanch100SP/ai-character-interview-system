@@ -13,7 +13,7 @@ export default function ChatRoom() {
   useEffect(() => {
     const fetchCharacter = async () => {
       try {
-        const response = await fetch(`https://ai-character-interview-system-gwmf.onrender.com/api/characters/${characterId}`);
+        const response = await fetch(`${API_BASE_URL}/api/characters/${characterId}/chat`);
         if (response.ok) {
           const data = await response.json();
           setCharacter(data);
@@ -44,7 +44,7 @@ export default function ChatRoom() {
 
     try {
       // 2. Call your live Node.js backend
-      const response = await fetch('https://ai-character-interview-system-gwmf.onrender.com/api/characters/$', {
+      const response = await fetch(`https://ai-character-interview-system-gwmf.onrender.com/api/characters/$`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
