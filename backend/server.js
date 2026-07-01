@@ -1,25 +1,28 @@
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
-import pool from './db.js';
-import characterRoutes from './routes/characterRoutes.js'; // <-- Import the new routes
-
-dotenv.config();
+import characterRoutes from './routes/characterRoutes.js';
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// 1. ENABLE CORS FOR ALL DOMAINS (Crucial for Vercel preview links)
+app.use(cors({
+  origin: '*', 
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// 2. ENABLE JSON BODY PARSING (Crucial so req.body isn't undefined)
 app.use(express.json());
 
-// A simple test route
+// 3. Your routes
+app.use('/api/characters', characterRoutes);
+
+// Default status route
 app.get('/', (req, res) => {
   res.json({ message: "Welcome to the AI Character Backend API!" });
 });
 
-// Connect the character routes to the /api/characters URL path
-app.use('/api/characters', characterRoutes);
-
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
