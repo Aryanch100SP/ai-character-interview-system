@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCharacterContext } from '../context/CharacterContext';
+const API_BASE_URL = "https://ai-character-interview-system-gwmf.onrender.com";
 
 export default function CharacterCreation() {
   const { state, dispatch } = useCharacterContext();
@@ -22,7 +23,7 @@ export default function CharacterCreation() {
     
     try {
       // Send the data to your Node.js Backend!
-      const response = await fetch('https://ai-character-interview-system-gwmf.onrender.com/api/characters', {
+      const response = await fetch(`${API_BASE_URL}/api/characters`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Send, ArrowLeft, Bot, User } from 'lucide-react';
+const API_BASE_URL = "https://ai-character-interview-system-gwmf.onrender.com";
 
 export default function ChatRoom() {
   const { characterId } = useParams(); // Grabs the ID from the URL
@@ -43,7 +44,7 @@ export default function ChatRoom() {
 
     try {
       // 2. Call your live Node.js backend
-      const response = await fetch(`https://ai-character-interview-system-gwmf.onrender.com/api/characters/${characterId}/chat`, {
+      const response = await fetch('https://ai-character-interview-system-gwmf.onrender.com/api/characters/$', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

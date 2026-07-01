@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { PlusCircle, MessageSquare, User } from 'lucide-react';
-
+const API_BASE_URL = "https://ai-character-interview-system-gwmf.onrender.com";
 export default function Dashboard() {
   const [characters, setCharacters] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -10,7 +10,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchCharacters = async () => {
       try {
-        const response = await fetch('[https://ai-character-interview-system-gwmf.onrender.com/api/characters](https://ai-character-interview-system-gwmf.onrender.com/api/characters)');
+        const response = await fetch(`${API_BASE_URL}/api/characters`);
         if (response.ok) {
           const data = await response.json();
           setCharacters(data); // Save the database characters into React state
