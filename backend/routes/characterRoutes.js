@@ -2,6 +2,26 @@ import express from 'express';
 import pool from '../db.js';
 const router = express.Router();
 
+// GET A SINGLE CHARACTER BY ID (For the Chat Room header)
+router.get('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const character = await pool.query(
+      'SELECT * FROM characters WHERE id = $1',
+      [id]
+    );
+
+    if (character.rows.length === 0) {
+      return res.status(404).json({ error: "Character not found" });
+    }
+
+    res.status(200).json(character.rows[0]);
+  } catch (err) {
+    console.error("Fetch Single Character Error:", err.message);
+    res.status(500).json({ error: "Failed to fetch character details" });
+  }
+});
+
 // 1. Save character to database
 router.post('/', async (req, res) => {
   try {

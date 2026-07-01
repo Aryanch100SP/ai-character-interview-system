@@ -4,20 +4,19 @@ import characterRoutes from './routes/characterRoutes.js';
 
 const app = express();
 
-// 1. ENABLE CORS FOR ALL DOMAINS (Crucial for Vercel preview links)
+// Enable CORS so Vercel can talk to Render
 app.use(cors({
   origin: '*', 
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// 2. ENABLE JSON BODY PARSING (Crucial so req.body isn't undefined)
+// Enable JSON body parsing
 app.use(express.json());
 
-// 3. Your routes
+// THIS IS THE CRUCIAL LINE: It links the /api/characters URL to your routes file
 app.use('/api/characters', characterRoutes);
 
-// Default status route
 app.get('/', (req, res) => {
   res.json({ message: "Welcome to the AI Character Backend API!" });
 });

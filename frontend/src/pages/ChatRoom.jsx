@@ -13,7 +13,7 @@ export default function ChatRoom() {
   useEffect(() => {
     const fetchCharacter = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/api/characters/${characterId}/chat`);
+        const response = await fetch(`${API_BASE_URL}/api/characters/${characterId}`);
         if (response.ok) {
           const data = await response.json();
           setCharacter(data);
