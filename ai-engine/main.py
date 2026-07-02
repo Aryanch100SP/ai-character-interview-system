@@ -43,8 +43,9 @@ async def chat_with_character(payload: ChatRequest):
     )
 
     # Groq uses the industry-standard OpenAI payload format
+    # Groq uses the industry-standard OpenAI payload format
     data = {
-        "model": "llama3-8b-8192",
+        "model": "llama-3.1-8b-instant",
         "messages": [
             {"role": "system", "content": system_instruction},
             {"role": "user", "content": payload.message}
