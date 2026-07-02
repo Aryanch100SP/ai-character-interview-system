@@ -22,17 +22,18 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"status": "Gemini AI Engine is online (REST API Mode)."}
+    return {"status": "Groq AI Engine is online."}
 
 @app.post("/api/chat")
 async def chat_with_character(payload: ChatRequest):
-    API_KEY = os.getenv("GEMINI_API_KEY")
+    # Pull the new Groq key from Render
+    API_KEY = os.getenv("GROQ_API_KEY")
     if not API_KEY:
-        print("CRITICAL API ERROR: GEMINI_API_KEY is missing!")
-        raise HTTPException(status_code=500, detail="API Key missing on server")
+        print("CRITICAL API ERROR: GROQ_API_KEY is missing!")
+        raise HTTPException(status_code=500, detail="Groq API Key missing on server")
 
-    # The exact, verified Google REST API URL for the modern Flash model
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+    # Groq's official API endpoint
+    url = "https://api.groq.com/openai/v1/chat/completions"
 
     system_instruction = (
         f"You are {payload.character_name}. "
@@ -41,26 +42,30 @@ async def chat_with_character(payload: ChatRequest):
         "Never break character. Respond directly to the user as this character."
     )
 
+    # Groq uses the industry-standard OpenAI payload format
     data = {
-        "system_instruction": {
-            "parts": [{"text": system_instruction}]
-        },
-        "contents": [
-            {"role": "user", "parts": [{"text": payload.message}]}
+        "model": "llama3-8b-8192",
+        "messages": [
+            {"role": "system", "content": system_instruction},
+            {"role": "user", "content": payload.message}
         ]
     }
 
-    headers = {'Content-Type': 'application/json'}
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
 
     try:
         response = requests.post(url, json=data, headers=headers)
         response_json = response.json()
 
         if response.status_code != 200:
-            print(f"GOOGLE API REJECTED REQUEST: {response_json}")
-            raise HTTPException(status_code=500, detail="Google API rejected the request")
+            print(f"GROQ API REJECTED REQUEST: {response_json}")
+            raise HTTPException(status_code=500, detail="Groq API rejected the request")
 
-        ai_text = response_json['candidates'][0]['content']['parts'][0]['text']
+        # Extract Llama 3's response
+        ai_text = response_json['choices'][0]['message']['content']
         return {"response": ai_text}
 
     except Exception as e:
