@@ -31,12 +31,9 @@ async def chat_with_character(payload: ChatRequest):
         print("CRITICAL API ERROR: GEMINI_API_KEY is missing!")
         raise HTTPException(status_code=500, detail="API Key missing on server")
 
-    # The exact, hardcoded Google REST API URL
-    # The exact, hardcoded Google REST API URL for the universally supported Pro model
-    # The exact, hardcoded Google REST API URL
+    # The exact, verified Google REST API URL for the modern Flash model
     url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
 
-    # Build the system instructions
     system_instruction = (
         f"You are {payload.character_name}. "
         f"Your backstory is: {payload.backstory}. "
@@ -44,7 +41,6 @@ async def chat_with_character(payload: ChatRequest):
         "Never break character. Respond directly to the user as this character."
     )
 
-    # Format the exact JSON payload Google expects
     data = {
         "system_instruction": {
             "parts": [{"text": system_instruction}]
@@ -57,16 +53,13 @@ async def chat_with_character(payload: ChatRequest):
     headers = {'Content-Type': 'application/json'}
 
     try:
-        # Send the raw HTTP POST request directly to Google
         response = requests.post(url, json=data, headers=headers)
         response_json = response.json()
 
-        # Catch any Google API rejections
         if response.status_code != 200:
             print(f"GOOGLE API REJECTED REQUEST: {response_json}")
             raise HTTPException(status_code=500, detail="Google API rejected the request")
 
-        # Extract the AI's text from the JSON response
         ai_text = response_json['candidates'][0]['content']['parts'][0]['text']
         return {"response": ai_text}
 
