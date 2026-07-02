@@ -2,7 +2,7 @@ import express from 'express';
 import pool from '../db.js';
 const router = express.Router();
 
-// GET A SINGLE CHARACTER BY ID (For the Chat Room header)
+// 1. GET A SINGLE CHARACTER BY ID (For the Chat Room header)
 router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -22,14 +22,23 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// 1. Save character to database
+// 2. CREATE A NEW CHARACTER (Upgraded with deep psychology fields)
 router.post('/', async (req, res) => {
   try {
-    const { name, short_description, backstory, personality_traits } = req.body;
+    const { 
+        name, short_description, backstory, personality_traits,
+        occupation, goals, core_values, fears, speaking_style, 
+        knowledge_boundaries, relationships 
+    } = req.body;
+    
+    // Default creator ID if you don't have user authentication yet
     const creator_id = '00000000-0000-0000-0000-000000000000'; 
+    
     const newCharacter = await pool.query(
-      'INSERT INTO characters (creator_id, name, short_description, backstory, personality_traits) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [creator_id, name, short_description, backstory, personality_traits]
+      `INSERT INTO characters 
+      (creator_id, name, short_description, backstory, personality_traits, occupation, goals, core_values, fears, speaking_style, knowledge_boundaries, relationships) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING *`,
+      [creator_id, name, short_description, backstory, personality_traits, occupation, goals, core_values, fears, speaking_style, knowledge_boundaries, relationships]
     );
     res.status(201).json(newCharacter.rows[0]);
   } catch (err) {
@@ -38,11 +47,11 @@ router.post('/', async (req, res) => {
   }
 });
 
-// 2. GET ALL CHARACTERS FOR THE DASHBOARD
+// 3. GET ALL CHARACTERS FOR THE DASHBOARD
 router.get('/', async (req, res) => {
   try {
     const allCharacters = await pool.query(
-      'SELECT id, name, short_description, backstory, personality_traits FROM characters ORDER BY created_at DESC'
+      `SELECT * FROM characters ORDER BY created_at DESC`
     );
     res.status(200).json(allCharacters.rows);
   } catch (err) {
@@ -51,13 +60,15 @@ router.get('/', async (req, res) => {
   }
 });
 
-// 3. CHAT WITH CHARACTER (Bridge to Python AI Engine)
+// 4. CHAT WITH CHARACTER (Bridge to Python AI Engine)
 router.post('/:id/chat', async (req, res) => {
   try {
     const { id } = req.params;
     const { message } = req.body;
+    
+    // Pull the entire character profile
     const characterResult = await pool.query(
-      'SELECT name, backstory, personality_traits FROM characters WHERE id = $1',
+      'SELECT * FROM characters WHERE id = $1',
       [id]
     );
 
@@ -66,13 +77,21 @@ router.post('/:id/chat', async (req, res) => {
     }
     const character = characterResult.rows[0];
 
+    // Send the massive payload to your Python Groq Engine
     const pythonResponse = await fetch('https://ai-engine-service-frmb.onrender.com/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         character_name: character.name,
-        backstory: character.backstory,
-        personality_traits: character.personality_traits,
+        backstory: character.backstory || "",
+        personality_traits: character.personality_traits || "",
+        occupation: character.occupation || "",
+        goals: character.goals || "",
+        core_values: character.core_values || "",
+        fears: character.fears || "",
+        speaking_style: character.speaking_style || "",
+        knowledge_boundaries: character.knowledge_boundaries || "",
+        relationships: character.relationships || "",
         message: message
       }),
     });
@@ -86,5 +105,4 @@ router.post('/:id/chat', async (req, res) => {
   }
 });
 
-// THE EXPORT MUST BE AT THE VERY BOTTOM
 export default router;

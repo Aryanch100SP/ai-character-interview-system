@@ -14,10 +14,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 1. UPGRADED: The API now expects all the deep psychology fields
 class ChatRequest(BaseModel):
     character_name: str
     backstory: str
     personality_traits: str
+    occupation: str
+    goals: str
+    core_values: str
+    fears: str
+    speaking_style: str
+    knowledge_boundaries: str
+    relationships: str
     message: str
 
 @app.get("/")
@@ -35,14 +43,22 @@ async def chat_with_character(payload: ChatRequest):
     # Groq's official API endpoint
     url = "https://api.groq.com/openai/v1/chat/completions"
 
+    # 2. UPGRADED: The ultimate system prompt forcing the AI to use the new constraints
     system_instruction = (
         f"You are {payload.character_name}. "
-        f"Your backstory is: {payload.backstory}. "
-        f"Your personality traits are: {payload.personality_traits}. "
-        "Never break character. Respond directly to the user as this character."
+        f"Occupation/Role: {payload.occupation}. "
+        f"Background: {payload.backstory}. "
+        f"Personality: {payload.personality_traits}. "
+        f"Your Goals: {payload.goals}. "
+        f"Your Core Values: {payload.core_values}. "
+        f"Your Deepest Fears: {payload.fears}. "
+        f"How You Speak: {payload.speaking_style}. "
+        f"What You Know (and don't know): {payload.knowledge_boundaries}. "
+        f"Your Relationships: {payload.relationships}. "
+        "INSTRUCTION: You must strictly embody this character. Never break character. "
+        "Adopt the specified speaking style perfectly. Do not demonstrate knowledge outside your boundaries."
     )
 
-    # Groq uses the industry-standard OpenAI payload format
     # Groq uses the industry-standard OpenAI payload format
     data = {
         "model": "llama-3.1-8b-instant",
@@ -65,7 +81,7 @@ async def chat_with_character(payload: ChatRequest):
             print(f"GROQ API REJECTED REQUEST: {response_json}")
             raise HTTPException(status_code=500, detail="Groq API rejected the request")
 
-        # Extract Llama 3's response
+        # Extract Llama 3.1's response
         ai_text = response_json['choices'][0]['message']['content']
         return {"response": ai_text}
 

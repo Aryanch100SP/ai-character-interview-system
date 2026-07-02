@@ -1,96 +1,101 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCharacterContext } from '../context/CharacterContext';
-const API_BASE_URL = "https://ai-character-interview-system-gwmf.onrender.com";
 
-export default function CharacterCreation() {
-  const { state, dispatch } = useCharacterContext();
-  const navigate = useNavigate();
-  const { characterForm } = state; 
-  const [isSubmitting, setIsSubmitting] = useState(false); // To prevent double-clicks
-  
+export default function CreateCharacter() {
+  const [formData, setFormData] = useState({
+    name: '',
+    short_description: '',
+    backstory: '',
+    personality_traits: '',
+    occupation: '',
+    goals: '',
+    core_values: '',
+    fears: '',
+    speaking_style: '',
+    knowledge_boundaries: '',
+    relationships: ''
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleChange = (e) => {
-    dispatch({
-      type: 'UPDATE_FORM_FIELD',
-      field: e.target.name,
-      value: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
     try {
-      // Send the data to your Node.js Backend!
-      const response = await fetch(`${API_BASE_URL}/api/characters`, {
+      // NOTE: Ensure this URL matches your actual deployed backend URL or local dev environment
+      const response = await fetch('/api/characters', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(characterForm),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
       });
-
+      
       if (response.ok) {
-       alert(`Success! ${characterForm.name} saved to PostgreSQL.`);
-       navigate('/'); // Automatically sends you back to the dashboard!
-
+        alert("Character successfully deployed to the AI Engine!");
+        // Reset form or redirect to dashboard here
+        window.location.href = '/dashboard'; 
       } else {
-        const errorData = await response.json();
-        alert(`Failed to save: ${errorData.error}`);
+        alert("Failed to create character. Check console for errors.");
       }
-    } catch (err) {
-      console.error("Network Error:", err);
-      alert("Could not connect to the backend server. Is it running?");
+    } catch (error) {
+      console.error("Error creating character", error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-6 bg-white rounded-xl shadow-md overflow-hidden">
-      <div className="px-8 py-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">Design New Character</h2>
+    <div className="max-w-4xl mx-auto p-6 bg-gray-900 text-white rounded-lg shadow-xl mt-10">
+      <h2 className="text-3xl font-bold mb-6 text-center text-blue-400">Deploy a New AI Persona</h2>
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
         
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Character Name</label>
-            <input type="text" name="name" value={characterForm.name} onChange={handleChange} required 
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" 
-              placeholder="e.g., Emperor Prithviraj Chauhan" />
+        {/* SECTION 1: Basic Identity */}
+        <div className="bg-gray-800 p-4 rounded border border-gray-700">
+          <h3 className="text-xl font-semibold mb-4 text-gray-300">1. Basic Identity</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <input name="name" placeholder="Character Name (e.g., Julian Thorne)" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:outline-none focus:border-blue-500" />
+            <input name="occupation" placeholder="Occupation / Role (e.g., Veteran Theatre Actor)" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:outline-none focus:border-blue-500" />
+            <input name="short_description" placeholder="Tagline (e.g., An eccentric actor who refuses to break character)" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white focus:outline-none focus:border-blue-500 md:col-span-2" />
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Short Description</label>
-            <input type="text" name="short_description" value={characterForm.short_description} onChange={handleChange} required 
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors" 
-              placeholder="e.g., A fearless and just historical ruler." />
+        {/* SECTION 2: Deep Psychology */}
+        <div className="bg-gray-800 p-4 rounded border border-gray-700">
+          <h3 className="text-xl font-semibold mb-4 text-gray-300">2. Deep Psychology & Lore</h3>
+          <div className="space-y-4">
+            <textarea name="backstory" placeholder="Backstory & Biography: Where did they come from? What defines their past?" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white h-24 focus:outline-none focus:border-blue-500" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <textarea name="personality_traits" placeholder="General Personality Traits (e.g., Stubborn, highly articulate, easily offended)" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white h-20 focus:outline-none focus:border-blue-500" />
+              <textarea name="goals" placeholder="Goals & Motivations (e.g., To deliver one last perfect performance)" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white h-20 focus:outline-none focus:border-blue-500" />
+              <textarea name="core_values" placeholder="Core Values (e.g., Artistic integrity, vulnerability)" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white h-20 focus:outline-none focus:border-blue-500" />
+              <textarea name="fears" placeholder="Deepest Fears (e.g., Being forgotten, losing touch with reality)" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white h-20 focus:outline-none focus:border-blue-500" />
+            </div>
           </div>
+        </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Backstory (System Prompt Context)</label>
-            <textarea name="backstory" value={characterForm.backstory} onChange={handleChange} required rows="4"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors resize-none" 
-              placeholder="Detail their history, motivations, and secrets. This will be fed directly to the AI." />
+        {/* SECTION 3: AI Generation Constraints */}
+        <div className="bg-gray-800 p-4 rounded border border-gray-700">
+          <h3 className="text-xl font-semibold mb-4 text-gray-300">3. Engine Constraints</h3>
+          <div className="space-y-4">
+            <textarea name="speaking_style" placeholder="Speaking Style: How do they talk? (e.g., Highly dramatic, poetic, uses sweeping hand gestures in asterisks)" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white h-20 focus:outline-none focus:border-blue-500" />
+            <textarea name="knowledge_boundaries" placeholder="Knowledge Boundaries: What do they NOT know? (e.g., Cannot grasp modern technology or finances)" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white h-20 focus:outline-none focus:border-blue-500" />
+            <textarea name="relationships" placeholder="Relationships: How do they treat the user/interviewer? (e.g., Treats the user as an audience member)" onChange={handleChange} required className="w-full bg-gray-700 border border-gray-600 rounded p-3 text-white h-20 focus:outline-none focus:border-blue-500" />
           </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">Personality Traits</label>
-            <textarea name="personality_traits" value={characterForm.personality_traits} onChange={handleChange} required rows="2"
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-colors resize-none" 
-              placeholder="e.g., Formal, authoritative, speaks in a commanding tone." />
-          </div>
-
-          <div className="pt-4">
-            <button type="submit" disabled={isSubmitting}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 text-white font-bold py-3 px-4 rounded-lg transition-colors shadow-sm"
-            >
-              {isSubmitting ? 'Saving to Database...' : 'Initialize Character Profile'}
-            </button>
-          </div>
-        </form>
-      </div>
+        </div>
+        
+        <button 
+          type="submit" 
+          disabled={isSubmitting}
+          className={`w-full font-bold py-4 px-4 rounded text-lg transition-all ${
+            isSubmitting ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500 text-white'
+          }`}
+        >
+          {isSubmitting ? 'Deploying to Database...' : 'Initialize Character Profile'}
+        </button>
+      </form>
     </div>
   );
 }
