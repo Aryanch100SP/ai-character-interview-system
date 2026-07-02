@@ -1,7 +1,8 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import os
 
 app = FastAPI()
@@ -15,10 +16,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure the Gemini API securely using the environment variable from Render
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+# Securely grab the API key from Render's environment variables
+API_KEY = os.getenv("GEMINI_API_KEY")
+client = genai.Client(api_key=API_KEY)
 
 # Define the exact data structure we expect to receive from the Node.js/React frontend
 class ChatRequest(BaseModel):
@@ -34,9 +34,6 @@ def read_root():
 @app.post("/api/chat")
 async def chat_with_character(payload: ChatRequest):
     try:
-        if not GEMINI_API_KEY:
-            raise HTTPException(status_code=500, detail="Gemini API Key is missing on the server.")
-
         # Construct the system instruction using the character's database profile
         system_instruction = (
             f"You are {payload.character_name}. "
@@ -45,15 +42,14 @@ async def chat_with_character(payload: ChatRequest):
             "Never break character. Respond directly to the user as this character."
         )
 
-        # Initialize the lightning-fast Gemini 1.5 Flash model with the character persona
-        # Initialize the updated Gemini 1.5 Flash model
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            system_instruction=system_instruction
+        # Generate response using the new google-genai SDK format
+        response = client.models.generate_content(
+            model='gemini-1.5-flash',
+            contents=payload.message,
+            config=types.GenerateContentConfig(
+                system_instruction=system_instruction,
+            )
         )
-
-        # Send the user's message to the model and get the response
-        response = model.generate_content(payload.message)
         
         return {"response": response.text}
 
