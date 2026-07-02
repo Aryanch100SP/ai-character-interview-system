@@ -1,9 +1,8 @@
+import os
+import requests
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from google import genai
-from google.genai import types
-import os
 
 app = FastAPI()
 
@@ -23,47 +22,52 @@ class ChatRequest(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"status": "Gemini AI Engine is online and ready for prompts."}
+    return {"status": "Gemini AI Engine is online (REST API Mode)."}
 
 @app.post("/api/chat")
 async def chat_with_character(payload: ChatRequest):
+    API_KEY = os.getenv("GEMINI_API_KEY")
+    if not API_KEY:
+        print("CRITICAL API ERROR: GEMINI_API_KEY is missing!")
+        raise HTTPException(status_code=500, detail="API Key missing on server")
+
+    # The exact, hardcoded Google REST API URL
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
+
+    # Build the system instructions
+    system_instruction = (
+        f"You are {payload.character_name}. "
+        f"Your backstory is: {payload.backstory}. "
+        f"Your personality traits are: {payload.personality_traits}. "
+        "Never break character. Respond directly to the user as this character."
+    )
+
+    # Format the exact JSON payload Google expects
+    data = {
+        "system_instruction": {
+            "parts": [{"text": system_instruction}]
+        },
+        "contents": [
+            {"role": "user", "parts": [{"text": payload.message}]}
+        ]
+    }
+
+    headers = {'Content-Type': 'application/json'}
+
     try:
-        API_KEY = os.getenv("GEMINI_API_KEY")
-        if not API_KEY:
-            print("CRITICAL API ERROR: GEMINI_API_KEY environment variable is missing!")
-            raise HTTPException(status_code=500, detail="API Key missing on server")
+        # Send the raw HTTP POST request directly to Google
+        response = requests.post(url, json=data, headers=headers)
+        response_json = response.json()
 
-        client = genai.Client(api_key=API_KEY)
+        # Catch any Google API rejections
+        if response.status_code != 200:
+            print(f"GOOGLE API REJECTED REQUEST: {response_json}")
+            raise HTTPException(status_code=500, detail="Google API rejected the request")
 
-        system_instruction = (
-            f"You are {payload.character_name}. "
-            f"Your backstory is: {payload.backstory}. "
-            f"Your personality traits are: {payload.personality_traits}. "
-            "Never break character. Respond directly to the user as this character."
-        )
-
-        config = types.GenerateContentConfig(system_instruction=system_instruction)
-
-        # FAULT-TOLERANT FALLBACK LOOP
-        try:
-            # Attempt 1: The standard modern model
-            print("Trying gemini-1.5-flash...")
-            response = client.models.generate_content(
-                model='gemini-1.5-flash', 
-                contents=payload.message,
-                config=config
-            )
-        except Exception as e:
-            print(f"1.5-flash failed ({e}). Falling back to universal model...")
-            # Attempt 2: The universal legacy model (Always available)
-            response = client.models.generate_content(
-                model='gemini-1.0-pro', 
-                contents=payload.message,
-                config=config
-            )
-        
-        return {"response": response.text}
+        # Extract the AI's text from the JSON response
+        ai_text = response_json['candidates'][0]['content']['parts'][0]['text']
+        return {"response": ai_text}
 
     except Exception as e:
-        print(f"CRITICAL API ERROR: {str(e)}")
-        raise HTTPException(status_code=500, detail="Failed to generate AI response.")
+        print(f"CRITICAL ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to parse AI response")
