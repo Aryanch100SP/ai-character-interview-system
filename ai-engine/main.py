@@ -7,7 +7,6 @@ import os
 
 app = FastAPI()
 
-# Allow the frontend to talk to this Python server
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"], 
@@ -16,11 +15,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Securely grab the API key from Render's environment variables
-API_KEY = os.getenv("GEMINI_API_KEY")
-client = genai.Client(api_key=API_KEY)
-
-# Define the exact data structure we expect to receive from the Node.js/React frontend
 class ChatRequest(BaseModel):
     character_name: str
     backstory: str
@@ -34,7 +28,13 @@ def read_root():
 @app.post("/api/chat")
 async def chat_with_character(payload: ChatRequest):
     try:
-        # Construct the system instruction using the character's database profile
+        API_KEY = os.getenv("GEMINI_API_KEY")
+        if not API_KEY:
+            print("CRITICAL API ERROR: GEMINI_API_KEY environment variable is missing!")
+            raise HTTPException(status_code=500, detail="API Key missing on server")
+
+        client = genai.Client(api_key=API_KEY)
+
         system_instruction = (
             f"You are {payload.character_name}. "
             f"Your backstory is: {payload.backstory}. "
@@ -42,17 +42,28 @@ async def chat_with_character(payload: ChatRequest):
             "Never break character. Respond directly to the user as this character."
         )
 
-        # Generate response using the new google-genai SDK format
-        response = client.models.generate_content(
-            model='gemini-1.5-flash',
-            contents=payload.message,
-            config=types.GenerateContentConfig(
-                system_instruction=system_instruction,
+        config = types.GenerateContentConfig(system_instruction=system_instruction)
+
+        # FAULT-TOLERANT FALLBACK LOOP
+        try:
+            # Attempt 1: The standard modern model
+            print("Trying gemini-1.5-flash...")
+            response = client.models.generate_content(
+                model='gemini-1.5-flash', 
+                contents=payload.message,
+                config=config
             )
-        )
+        except Exception as e:
+            print(f"1.5-flash failed ({e}). Falling back to universal model...")
+            # Attempt 2: The universal legacy model (Always available)
+            response = client.models.generate_content(
+                model='gemini-1.0-pro', 
+                contents=payload.message,
+                config=config
+            )
         
         return {"response": response.text}
 
     except Exception as e:
-        print(f"Server Error: {str(e)}")
+        print(f"CRITICAL API ERROR: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to generate AI response.")
