@@ -33,7 +33,8 @@ async def chat_with_character(payload: ChatRequest):
 
     # The exact, hardcoded Google REST API URL
     # The exact, hardcoded Google REST API URL for the universally supported Pro model
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent?key={API_KEY}"
+    # The exact, hardcoded Google REST API URL
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={API_KEY}"
 
     # Build the system instructions
     system_instruction = (
